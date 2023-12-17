@@ -16,9 +16,19 @@ WebServer::WebServer(
             port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false),
             timer_(new HeapTimer()), threadpool_(new ThreadPool(threadNum)), epoller_(new Epoller())
     {
-    srcDir_ = getcwd(nullptr, 256);
+    std::filesystem::path currPath = filesystem::current_path();
+    std::filesystem::path parentPath = currPath.parent_path();
+    std::filesystem::path resPath = parentPath / "resources";
+    char* temp = strdup(resPath.string().c_str());
+    if (temp != nullptr) {
+        srcDir_ = temp; // 更新指针
+    } else {
+        // 错误处理
+        std::cerr << "Critical error: Memory allocation failed." << std::endl;
+        // 清理资源...
+        exit(EXIT_FAILURE);
+    }
     assert(srcDir_);
-    strncat(srcDir_, "/resources/", 16);
     HttpConn::userCount = 0;
     HttpConn::srcDir = srcDir_;
     SqlConnPool::Instance()->Init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
